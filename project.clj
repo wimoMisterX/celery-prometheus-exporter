@@ -14,7 +14,9 @@
                  [ring/ring-defaults "0.3.2"]
                  
                  [com.novemberain/langohr "5.1.0"]
-                 [metosin/jsonista "0.2.6"]]
+                 [metosin/jsonista "0.2.6"]
+                 [clj-commons/iapetos "0.1.9"]
+                 [clojure.java-time "0.3.2"]]
 
   :plugins [[lein-ring "0.12.5"]]
 
