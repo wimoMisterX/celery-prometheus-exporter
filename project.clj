@@ -13,6 +13,8 @@
                  [ring/ring-core "1.8.0" :exclusions [commons-codec]]
                  [ring/ring-defaults "0.3.2"]
                  
+                 [medley "1.3.0"]
+                 [jarohen/chime "0.3.2"]
                  [com.novemberain/langohr "5.1.0"]
                  [metosin/jsonista "0.2.6"]
                  [clj-commons/iapetos "0.1.9"]
