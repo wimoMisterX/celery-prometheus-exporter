@@ -107,7 +107,8 @@
 
 
 (defn setup-celery-event-receiver! [prom-registry events-atom instance-uri]
-  (let [rmq-conn (rmq/connect {:uri instance-uri})
+  (let [rmq-conn (rmq/connect {:uri instance-uri
+                               :requested-heartbeat 30})
         rmq-ch (lch/open rmq-conn)
         queue-name (str "celeryev.receiver." (java.util.UUID/randomUUID))]
 
