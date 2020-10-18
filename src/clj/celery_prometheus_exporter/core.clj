@@ -33,18 +33,18 @@
    "task-rejected" "REJECTED"})
 
 (def tasks-total-counter
-  (prometheus/counter :celery-clj/tasks-total
+  (prometheus/counter :celery/tasks-total
                       {:description "Number of tasks per state and name"
                        :labels [:instance :queue :name :state]}))
 
 (def tasks-runtime-histogram
-  (prometheus/histogram :celery-clj/tasks-runtime-millis
+  (prometheus/histogram :celery/tasks-runtime-millis
                         {:description "Task runtime (seconds) per queue and name"
                          :labels [:instance :queue :name]
                          :buckets [50.0 100.0 250.0 500.0 750.0 1000.0 2500.0 5000.0 7500.0 10000.0 25000.0 60000.0 180000.0 300000.0 600000.0 1200000.0]}))
 
 (def time-spent-in-queue-histogram
-  (prometheus/histogram :celery-clj/time-spent-in-queue-millis
+  (prometheus/histogram :celery/time-spent-in-queue-millis
                         {:description "Time from when a task is published and received by a worker per queue (seconds)"
                          :labels [:instance :queue :name]
                          :buckets [1000.0 30000.0 60000.0 180000.0 300000.0 600000.0 1800000.0 3600000.0 7200000.0 1.08E7 1.8E7 3.6E7]}))
@@ -79,16 +79,16 @@
       (when (and (= (:type event) "task-started") published_at)
         (let [task-published-at (t/instant (t/formatter :iso-offset-date-time) published_at)
               task-started-at (t/instant (* (:timestamp event) 1000))]
-          (prometheus/observe (prom-registry :celery-clj/time-spent-in-queue-millis prom-labels)
+          (prometheus/observe (prom-registry :celery/time-spent-in-queue-millis prom-labels)
                               (t/time-between :millis task-published-at task-started-at))))
 
       ;; track task runtime
       (when (= (:type event) "task-succeeded")
-        (prometheus/observe (prom-registry :celery-clj/tasks-runtime-millis prom-labels)
+        (prometheus/observe (prom-registry :celery/tasks-runtime-millis prom-labels)
                             (* (:runtime event) 1000)))
 
       ;; increase task state counter
-      (prometheus/inc (prom-registry :celery-clj/tasks-total prom-labels-with-state))))
+      (prometheus/inc (prom-registry :celery/tasks-total prom-labels-with-state))))
 
   ;; remove the task from the events atom
   (when (contains? #{"task-succeeded" "task-rejected" "task-revoked" "task-failed"} (:type event))
@@ -149,7 +149,7 @@
 
 (defn deregister-inactive-targets! [time-now instances-atom events-atom]
   (doseq [[instance-uri {:keys [rmq-conn last-scraped]}] (filter #(>= (t/time-between :hours (:last-scraped (second %)) time-now) 1)
-                                                    @instances-atom)]
+                                                                 @instances-atom)]
     (log/infof "Deregistering target %s since it was last scraped at %s" instance-uri last-scraped)
     (rmq/close rmq-conn)
     (swap! instances-atom dissoc instance-uri)
