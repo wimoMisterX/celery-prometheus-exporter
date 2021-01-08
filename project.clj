@@ -1,4 +1,4 @@
-(defproject celery-prometheus-exporter "0.1.0"
+(defproject celery-prometheus-exporter "0.1.1"
   :description "Celery Prometheus Exporter"
 
   :dependencies [[org.clojure/clojure "1.10.1"]
@@ -9,7 +9,7 @@
                  [environ "1.2.0"]
 
                  [compojure "1.6.1" :exclusions [ring/ring-codec]]
-                 [http-kit "2.3.0"]
+                 [http-kit "2.5.0"]
                  [ring/ring-core "1.8.0" :exclusions [commons-codec]]
                  [ring/ring-defaults "0.3.2"]
                  

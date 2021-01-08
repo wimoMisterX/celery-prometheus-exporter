@@ -50,7 +50,7 @@
                          :buckets [1000.0 30000.0 60000.0 180000.0 300000.0 600000.0 1800000.0 3600000.0 7200000.0 1.08E7 1.8E7 3.6E7]}))
 
 
-(defonce registry
+(defn new-registry []
   (-> (prometheus/collector-registry)
       (prometheus/register
         tasks-total-counter
@@ -106,8 +106,9 @@
     (process-event prom-registry instance-uri events-atom event)))
 
 
-(defn setup-celery-event-receiver! [prom-registry events-atom instance-uri]
-  (let [rmq-conn (rmq/connect {:uri instance-uri
+(defn setup-celery-event-receiver! [events-atom instance-uri]
+  (let [prom-registry (new-registry)
+        rmq-conn (rmq/connect {:uri instance-uri
                                :requested-heartbeat 30})
         rmq-ch (lch/open rmq-conn)
         queue-name (str "celeryev.receiver." (java.util.UUID/randomUUID))]
@@ -127,30 +128,23 @@
                      (partial handle-events! prom-registry instance-uri events-atom)
                      {:auto-ack true})
 
-    rmq-conn))
+    {:rmq-conn rmq-conn 
+     :prom-registry prom-registry}))
 
 
-(defn get-metrics [prom-registry instance-uri]
-  (->> (export/text-format prom-registry)
-       string/split-lines
-       (transduce (filter #(or (string/starts-with? % "# ")
-                               (string/includes? % (str "instance=\"" instance-uri "\""))))
-                  conj)
-       (string/join "\n")))
-
-
-(defn target-metrics-scrape [prom-registry instances-atom events-atom instance-uri]
+(defn target-metrics-scrape [instances-atom events-atom instance-uri]
   (do 
     (when (nil? (get @instances-atom instance-uri))
-      (swap! instances-atom assoc instance-uri {:rmq-conn (setup-celery-event-receiver! prom-registry events-atom instance-uri)}))
+      (swap! instances-atom assoc instance-uri (setup-celery-event-receiver! events-atom instance-uri)))
     (swap! instances-atom assoc-in [instance-uri :last-scraped] (t/instant))
-    (get-metrics prom-registry instance-uri)))
+    (export/text-format (get-in @instances-atom [instance-uri :prom-registry]))))
 
 
 (defn deregister-inactive-targets! [time-now instances-atom events-atom]
-  (doseq [[instance-uri {:keys [rmq-conn last-scraped]}] (filter #(>= (t/time-between :hours (:last-scraped (second %)) time-now) 1)
-                                                                 @instances-atom)]
+  (doseq [[instance-uri {:keys [rmq-conn prom-registry last-scraped]}] (filter #(>= (t/time-between :hours (:last-scraped (second %)) time-now) 1)
+                                                                               @instances-atom)]
     (log/infof "Deregistering target %s since it was last scraped at %s" instance-uri last-scraped)
+    (prometheus/clear prom-registry)
     (rmq/close rmq-conn)
     (swap! instances-atom dissoc instance-uri)
     (swap! events-atom dissoc instance-uri)))
@@ -167,7 +161,7 @@
 
 (defroutes routes
   (GET "/scrape" [target]
-    (target-metrics-scrape registry active-scrape-instances active-events target))
+    (target-metrics-scrape active-scrape-instances active-events target))
   (not-found "Not Found"))
 
 
