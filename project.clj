@@ -28,16 +28,9 @@
 
   :main ^:skip-aot celery-prometheus-exporter.core
 
-  :uberjar-name "celery-prometheus-exporter.jar"
+  :uberjar-name "celery_exporter.jar"
 
   :clean-targets ^{:protect false} [:target-path]
 
-  :profiles {:dev [:project/dev :profiles/dev]
-
-             :project/dev {:dependencies [[ring/ring-devel "1.8.0" :exclusions [commons-codec]]]}
-
-             :profiles/dev {}
-
-             :uberjar {:prep-tasks ["compile"]
-                       :aot :all
+  :profiles {:uberjar {:aot :all
                        :omit-source true}})

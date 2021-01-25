@@ -1,0 +1,5 @@
+.git
+*.sw*
+.dockerignore
+Dockerfile*
+target/
