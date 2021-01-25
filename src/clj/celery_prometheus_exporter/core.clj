@@ -47,7 +47,7 @@
   (prometheus/histogram :celery/time-spent-in-queue-millis
                         {:description "Time from when a task is published and received by a worker per queue (seconds)"
                          :labels [:instance :queue :name]
-                         :buckets [1000.0 30000.0 60000.0 180000.0 300000.0 600000.0 1800000.0 3600000.0 7200000.0 1.08E7 1.8E7 3.6E7]}))
+                         :buckets [1000.0 5000.0 15000.0 30000.0 45000.0 60000.0 180000.0 300000.0 600000.0 1800000.0 3600000.0 7200000.0 1.08E7 1.8E7 3.6E7]}))
 
 
 (defn new-registry []
