@@ -66,7 +66,10 @@
 (defn process-event [prom-registry instance-uri events-atom event]
   ;; add the event to the events-atom as this event contains all details of the task
   (when (= (:type event) "task-received")
-    (swap! events-atom assoc-in [instance-uri (:uuid event)] (select-keys event [:queue :name :published_at])))
+    ;; tasks can be scheduled so use the eta as the published_at in those cases
+    (swap! events-atom assoc-in [instance-uri (:uuid event)] (-> event
+                                                                 (update :published_at #(or (:eta event) %))
+                                                                 (select-keys [:queue :name :published_at]))))
 
   ;; the following event types can only be processed if the task-recevied for the task is in the events-atom
   (when-let [{:keys [published_at] :as original-event} (get-in @events-atom [instance-uri (:uuid event)])]
