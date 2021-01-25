@@ -1,4 +1,4 @@
-(defproject celery-prometheus-exporter "0.1.1"
+(defproject celery-prometheus-exporter "0.1.2"
   :description "Celery Prometheus Exporter"
 
   :dependencies [[org.clojure/clojure "1.10.1"]
